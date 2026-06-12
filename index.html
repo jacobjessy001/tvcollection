@@ -92,6 +92,7 @@ background:var(--bg-card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blu
 border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
 transition:var(--transition);z-index:50;
 }
+.sidebar-header-inner{padding:14px 14px 0;flex-shrink:0}
 #cat-wrap{padding:10px 10px 6px;flex-shrink:0;display:flex;flex-direction:column;gap:6px}
 #cat-select,#country-select{
   width:100%;padding:9px 14px;border-radius:10px;
@@ -244,6 +245,17 @@ opacity:0;transition:opacity 0.3s ease;z-index:10;
 #footer-strip{flex-wrap:wrap;gap:4px;text-align:center;font-size:10px}
 }
 
+/* VOLUME POPUP */
+#vol-popup{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(10,15,30,0.95);border:1px solid var(--border);border-radius:12px;padding:8px 16px;font-size:13px;color:var(--text-primary);pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:20;backdrop-filter:blur(10px)}
+#vol-popup.show{opacity:1}
+
+/* PLAYER CHANNEL BADGE */
+#ch-badge{position:absolute;top:14px;left:14px;display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(10,15,30,0.85);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--text-primary);z-index:8;opacity:0;transition:opacity 0.3s;pointer-events:none;backdrop-filter:blur(8px)}
+#ch-badge.show{opacity:1}
+#ch-badge .badge-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+#ch-badge .badge-dot.live{background:var(--green);box-shadow:0 0 6px rgba(74,222,128,0.5)}
+#ch-badge .badge-dot.offline{background:var(--red)}
+
 /* SCROLLBAR GLOBAL */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -277,6 +289,9 @@ opacity:0;transition:opacity 0.3s ease;z-index:10;
 <div id="main-wrap">
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
 <aside id="sidebar">
+  <div class="sidebar-header-inner">
+    <span style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase">📡 Live Channels</span>
+  </div>
   <div id="cat-wrap">
     <select id="cat-select" onchange="selectGroup(this.value)"></select>
     <select id="country-select" onchange="loadCountry(this.value)"></select>
@@ -286,6 +301,7 @@ opacity:0;transition:opacity 0.3s ease;z-index:10;
 
 <main id="main">
   <div id="player-container" class="idle">
+    <div id="ch-badge"><span class="badge-dot"></span><span id="badge-text"></span></div>
     <div id="video-wrap">
       <video id="video" playsinline></video>
     </div>
@@ -347,6 +363,7 @@ opacity:0;transition:opacity 0.3s ease;z-index:10;
         </select>
       </div>
     </div>
+    <div id="vol-popup"></div>
   </div>
 
   <div id="source-tabs-wrap" class="hidden"></div>
@@ -939,7 +956,7 @@ let countryCache={};
 let countrySelector=null;
 
 // ==================== COUNTRY DATA ====================
-const COUNTRY_MAP={ae:"UAE",af:"Afghanistan",al:"Albania",ar:"Argentina",at:"Austria",au:"Australia",az:"Azerbaijan",ba:"Bosnia",bd:"Bangladesh",be:"Belgium",bg:"Bulgaria",bj:"Benin",bo:"Bolivia",br:"Brazil",by:"Belarus",ca:"Canada",cd:"DRCongo",ch:"Switzerland",ci:"IvoryCoast",cl:"Chile",cn:"China",co:"Colombia",cr:"CostaRica",cu:"Cuba",cy:"Cyprus",cz:"Czechia",de:"Germany",dk:"Denmark",do:"Dominican",ec:"Ecuador",ee:"Estonia",eg:"Egypt",es:"Spain",fi:"Finland",fr:"France",ge:"Georgia",gh:"Ghana",gp:"Guadeloupe",gr:"Greece",gt:"Guatemala",hn:"Honduras",hr:"Croatia",ht:"Haiti",hu:"Hungary",id:"Indonesia",il:"Israel",in:"India",iq:"Iraq",ir:"Iran",it:"Italy",jo:"Jordan",jp:"Japan",ke:"Kenya",kh:"Cambodia",kr:"SouthKorea",kw:"Kuwait",kz:"Kazakhstan",la:"Laos",lb:"Lebanon",lk:"SriLanka",lt:"Lithuania",lu:"Luxembourg",lv:"Latvia",ma:"Morocco",md:"Moldova",mq:"Martinique",mx:"Mexico",my:"Malaysia",ng:"Nigeria",ni:"Nicaragua",nl:"Netherlands",nz:"NewZealand",om:"Oman",pa:"Panama",pe:"Peru",ph:"Philippines",pk:"Pakistan",pl:"Poland",ru:"Russia",rw:"Rwanda",sa:"SaudiArabia",se:"Sweden",sg:"Singapore",sy:"Syria",tw:"Taiwan",ua:"Ukraine",uk:"UK",us:"USA"};
+const COUNTRY_MAP={ae:"UAE",af:"Afghanistan",al:"Albania",ar:"Argentina",at:"Austria",au:"Australia",az:"Azerbaijan",ba:"Bosnia",bd:"Bangladesh",be:"Belgium",bg:"Bulgaria",bj:"Benin",bo:"Bolivia",br:"Brazil",by:"Belarus",ca:"Canada",cd:"DRCongo",ch:"Switzerland",ci:"IvoryCoast",cl:"Chile",cn:"China",co:"Colombia",cr:"CostaRica",cu:"Cuba",cy:"Cyprus",cz:"Czechia",de:"Germany",dk:"Denmark",do:"Dominican",ec:"Ecuador",ee:"Estonia",eg:"Egypt",es:"Spain",fi:"Finland",fr:"France",ge:"Georgia",gh:"Ghana",gp:"Guadeloupe",gr:"Greece",gt:"Guatemala",hn:"Honduras",hr:"Croatia",ht:"Haiti",hu:"Hungary",id:"Indonesia",in:"India",iq:"Iraq",ir:"Iran",it:"Italy",jo:"Jordan",jp:"Japan",ke:"Kenya",kh:"Cambodia",kr:"SouthKorea",kw:"Kuwait",kz:"Kazakhstan",la:"Laos",lb:"Lebanon",lk:"SriLanka",lt:"Lithuania",lu:"Luxembourg",lv:"Latvia",ma:"Morocco",md:"Moldova",mq:"Martinique",mx:"Mexico",my:"Malaysia",ng:"Nigeria",ni:"Nicaragua",nl:"Netherlands",nz:"NewZealand",om:"Oman",pa:"Panama",pe:"Peru",ph:"Philippines",pk:"Pakistan",pl:"Poland",ru:"Russia",rw:"Rwanda",sa:"SaudiArabia",se:"Sweden",sg:"Singapore",sy:"Syria",tw:"Taiwan",ua:"Ukraine",uk:"UK",us:"USA"};
 
 function _e(url){const b=new TextEncoder().encode(url),r=new Uint8Array(b.length);for(let i=0;i<b.length;i++)r[i]=b[i]^_K.charCodeAt(i%_K.length);return btoa(String.fromCharCode(...r));}
 
@@ -1246,10 +1263,18 @@ function toggleMute(){
   isMuted=!isMuted;video.muted=isMuted;
   $('vol-on').style.display=isMuted?'none':'';
   $('vol-off').style.display=isMuted?'':'none';
+  volSlider.value=isMuted?0:volume*100;
+  showVolPopup(isMuted?'MUTED':`🔊 ${Math.round(volume*100)}%`);
+}
+let volTimeout=null;
+function showVolPopup(msg){
+  const p=$('vol-popup');p.textContent=msg;p.classList.add('show');
+  clearTimeout(volTimeout);volTimeout=setTimeout(()=>p.classList.remove('show'),1200);
 }
 function setVolume(){
   volume=volSlider.value/100;video.volume=volume;isMuted=false;video.muted=false;
   $('vol-on').style.display='';$('vol-off').style.display='none';
+  showVolPopup(volume===0?'🔇 MUTED':`🔊 ${Math.round(volume*100)}%`);
 }
 function updateSeekBar(){
   if(!video.duration) return;
@@ -1302,6 +1327,14 @@ async function checkStreamStatus(url){
 }
 function setMetaStatus(s){
   metaStatus.className=s;
+  const bd=$('ch-badge');
+  const bt=$('badge-text');
+  const dot=bd.querySelector('.badge-dot');
+  if(currentChannel){
+    bt.textContent=currentChannel.name;
+    dot.className='badge-dot '+s;
+    bd.classList.add('show');
+  }
 }
 function updateChannelStatusDots(){
   document.querySelectorAll('.ch-item').forEach(el=>{
@@ -1381,6 +1414,10 @@ setTimeout(startStatusChecks,1000);
 playerContainer.addEventListener('click',(e)=>{
   if(e.target.closest('#controls-bar')||e.target.closest('.player-overlay')) return;
   showControlsBriefly();
+});
+playerContainer.addEventListener('dblclick',(e)=>{
+  if(e.target.closest('#controls-bar')||e.target.closest('.player-overlay')) return;
+  toggleFullscreen();
 });
 playerContainer.addEventListener('mousemove',showControlsBriefly);
 </script>
